@@ -1,0 +1,14 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tocaai-app
+    container_name: tocaai-container
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/var/www
+    environment:
+      - DB_CONNECTION=sqlite
+      - DB_DATABASE=/var/www/database/database.sqlite
