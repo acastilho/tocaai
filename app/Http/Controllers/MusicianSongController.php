@@ -1,55 +1,78 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Musician;
 use App\Models\Song;
-use App\Models\SongRequest;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class MusicianSongController extends Controller
 {
-    public function dashboard() {
-        $musician = Musician::where("user_id", Auth::id())->first();
-        if (!$musician) return redirect("/");
-        
-        $orders = SongRequest::whereHas("song", function($q) use ($musician) {
-            $q->where("musician_id", $musician->id);
-        })->with("song")->latest()->get();
+    /**
+     * Dashboard Principal: Exibe os pedidos recebidos.
+     */
+    public function dashboard()
+    {
+        $user = Auth::user();
+        $musician = Musician::where('user_id', $user->id)->first();
 
-        return view("dashboard", compact("musician", "orders"));
+        if (!$musician) {
+            return redirect()->route('home')->with('error', 'Perfil de músico não encontrado.');
+        }
+
+        // Pegamos todos os pedidos vinculados a este músico para testar a exibição
+        $orders = Order::where('musician_id', $musician->id)
+                       ->with('song')
+                       ->latest()
+                       ->get();
+
+        return view('musician.dashboard', compact('musician', 'orders'));
     }
 
-    public function index($slug) {
-        $musician = Musician::where("slug", $slug)->firstOrFail();
+    /**
+     * Lista de Repertório: Exibe as músicas que o cantor toca.
+     */
+    public function index($slug)
+    {
+        $musician = Musician::where('slug', $slug)->firstOrFail();
+        
+        // Segurança: só o dono do perfil acessa o painel de edição
+        if (Auth::id() !== $musician->user_id) {
+            abort(403);
+        }
+
         $songs = $musician->songs()->latest()->get();
-        return view("musician.songs.index", compact("musician", "songs"));
+
+        return view('musician.songs.index', compact('musician', 'songs'));
     }
 
-    public function store(Request $request, $slug) {
-        $musician = Musician::where("slug", $slug)->firstOrFail();
-        
-        // Forçando o salvamento direto para evitar bloqueios do Laravel
-        $song = new Song();
-        $song->title = $request->title;
-        $song->artist_original = $request->artist_original;
-        $musician->songs()->save($song);
-        
-        return back()->with("success", "Música adicionada!");
+    /**
+     * Adicionar Música: Salva nova música no repertório.
+     */
+    public function store(Request $request, $slug)
+    {
+        $musician = Musician::where('slug', $slug)->firstOrFail();
+
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'artist' => 'nullable|string|max:255',
+        ]);
+
+        $musician->songs()->create($data);
+
+        return back()->with('success', 'Música adicionada com sucesso!');
     }
 
-    public function destroy($slug, $id) {
-        Song::destroy($id);
-        return back();
-    }
+    /**
+     * Remover Música: Exclui do repertório.
+     */
+    public function destroy($slug, $id)
+    {
+        $song = Song::where('id', $id)->firstOrFail();
+        $song->delete();
 
-    public function updatePix(Request $request, $slug) {
-        $musician = Musician::where("slug", $slug)->firstOrFail();
-        
-        // A MÁGICA ESTÁ AQUI: Salvamento direto da chave Pix
-        $musician->pix_key = $request->pix_key;
-        $musician->save();
-        
-        return back()->with("success", "Pix atualizado!");
+        return back()->with('success', 'Música removida do repertório.');
     }
 }

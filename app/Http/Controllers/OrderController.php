@@ -1,28 +1,40 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use App\Models\SongRequest;
+use App\Models\Order;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
     public function store(Request $request)
     {
-        $request->validate([
-            "song_id" => "required",
-            "customer_name" => "required",
-            "receipt" => "required|image|mimes:jpeg,png,jpg|max:10240" 
+        $data = $request->validate([
+            'musician_id' => 'required|exists:musicians,id',
+            'song_id' => 'required|exists:songs,id',
+            'client_name' => 'required|string|max:255',
+            'amount' => 'required|numeric|min:1',
         ]);
 
-        $path = $request->file("receipt")->store("receipts", "public");
+        Order::create([
+            'musician_id' => $data['musician_id'],
+            'song_id' => $data['song_id'],
+            'client_name' => $data['client_name'],
+            'amount' => $data['amount'],
+            'status' => 'pending',
+        ]);
 
-        $order = new SongRequest();
-        $order->song_id = $request->song_id;
-        $order->customer_name = $request->customer_name;
-        $order->status = "pending";
-        // $order->receipt_path = $path; // Ative após criar a migration
-        $order->save();
+        return back()->with([
+            'success' => 'Pedido enviado!',
+            'audio_name' => $data['client_name'],
+            'audio_amount' => $data['amount']
+        ]);
+    }
 
-        return back()->with("success", "Pedido enviado!");
+    public function complete($id)
+    {
+        $order = Order::findOrFail($id);
+        $order->update(['status' => 'completed']);
+        return back()->with('success', 'Pedido concluído!');
     }
 }

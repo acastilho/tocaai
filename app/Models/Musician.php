@@ -1,11 +1,31 @@
 <?php
-namespace App\Models;
-use Illuminate\Database\Eloquent\Model;
-use App\Models\User;
 
-class Musician extends Model {
-    protected $fillable = ["name", "slug", "bio", "is_active", "user_id"];
-    
-    public function user() { return $this->belongsTo(User::class); }
-    public function songs() { return $this->hasMany(Song::class); }
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class Musician extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id',
+        'name',
+        'slug',
+        'pix_key',
+        'phone',
+        'address',
+        'is_active'
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function songs()
+    {
+        return $this->hasMany(Song::class);
+    }
 }

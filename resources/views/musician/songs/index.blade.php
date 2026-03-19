@@ -1,63 +1,91 @@
-<x-app-layout>
-    <div class="py-12 bg-black min-h-screen text-white">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            
-            <div class="flex justify-between items-center mb-8">
-                <h1 class="text-2xl font-black uppercase italic text-yellow-500">Minhas Músicas</h1>
-                <a href="{{ route('musician.dashboard') }}" class="text-xs font-bold text-gray-500 uppercase hover:text-white">Voltar ao Painel</a>
-            </div>
+@extends('layouts.tocaai')
 
-            <div class="bg-gray-900 p-8 rounded-[32px] border border-gray-800 mb-8 shadow-2xl">
-                <h2 class="text-[10px] font-black uppercase mb-6 text-gray-500 tracking-widest">Cadastrar Nova Música</h2>
-                <form action="{{ route('musician.songs.store', $musician->slug) }}" method="POST" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+@section('title', 'Gerenciar Repertório - TocaAí')
+
+@section('content')
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="fw-black text-white uppercase italic tracking-tighter">Meu <span style="color: #FF4757;">Repertório</span></h1>
+            <p class="text-secondary small uppercase fw-bold tracking-widest">Adicione ou remova as músicas que você toca</p>
+        </div>
+        <a href="{{ route('musician.dashboard', $musician->slug) }}" class="btn btn-outline-light rounded-pill px-4 text-[10px] fw-bold">
+            <i class="bi bi-arrow-left me-2"></i>VOLTAR AO PAINEL
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card border-0 p-4" style="background: #161616; border-radius: 24px; border: 1px solid #222 !important;">
+                <h5 class="text-white fw-bold mb-4">Nova Música</h5>
+                <form action="{{ route('musician.songs.store', $musician->slug) }}" method="POST">
                     @csrf
-                    <div class="md:col-span-2">
-                        <input type="text" name="title" placeholder="Nome da Música" required 
-                               class="w-full bg-black border-2 border-gray-800 rounded-2xl px-6 py-4 text-white focus:border-yellow-500 outline-none transition-all">
+                    <div class="mb-3">
+                        <label class="text-secondary small fw-bold uppercase mb-2 d-block">Título da Música</label>
+                        <input type="text" name="title" class="form-control bg-black border-secondary text-white py-3 rounded-3" placeholder="Ex: Evidências" required>
                     </div>
-                    <div class="md:col-span-2">
-                        <input type="text" name="artist_original" placeholder="Compositor / Artista" required
-                               class="w-full bg-black border-2 border-gray-800 rounded-2xl px-6 py-4 text-white focus:border-yellow-500 outline-none transition-all">
+                    <div class="mb-4">
+                        <label class="text-secondary small fw-bold uppercase mb-2 d-block">Artista / Banda</label>
+                        <input type="text" name="artist" class="form-control bg-black border-secondary text-white py-3 rounded-3" placeholder="Ex: Chitãozinho & Xororó">
                     </div>
-                    <button type="submit" class="bg-yellow-500 text-black font-black rounded-2xl uppercase italic hover:scale-105 transition-transform shadow-lg shadow-yellow-500/20">
-                        Add
+                    <button type="submit" class="btn w-100 py-3 fw-black uppercase italic" style="background: #FF4757; color: white; border-radius: 15px;">
+                        ADICIONAR À LISTA
                     </button>
                 </form>
             </div>
+        </div>
 
-            <div class="bg-gray-900 rounded-[32px] border border-gray-800 overflow-hidden shadow-xl">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="bg-black/50 text-[10px] uppercase text-gray-500 font-black">
-                            <th class="px-8 py-5">Música / Artista</th>
-                            <th class="px-8 py-5 text-right">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-800">
-                        @foreach($songs as $song)
-                        <tr class="hover:bg-white/5 transition-colors">
-                            <td class="px-8 py-5">
-                                <p class="font-bold text-white">{{ $song->title }}</p>
-                                <p class="text-[10px] text-gray-500 uppercase font-bold">{{ $song->artist_original }}</p>
-                            </td>
-                            <td class="px-8 py-5 text-right">
-                                <form action="{{ route('musician.songs.destroy', [$musician->slug, $song->id]) }}" method="POST" onsubmit="return confirm('Excluir esta música?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="text-red-500 text-[10px] font-black uppercase hover:text-red-400">Excluir</button>
-                                </form>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-                @if($songs->isEmpty())
-                    <div class="p-12 text-center">
-                        <p class="text-gray-600 italic font-medium">Sua lista está vazia. Adicione músicas acima!</p>
-                    </div>
-                @endif
+        <div class="col-md-8">
+            <div class="card border-0" style="background: #161616; border-radius: 24px; border: 1px solid #222 !important; overflow: hidden;">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0 align-middle">
+                        <thead style="background: #1a1a1a;">
+                            <tr>
+                                <th class="px-4 py-3 border-0 text-secondary small fw-bold uppercase">Música</th>
+                                <th class="px-4 py-3 border-0 text-secondary small fw-bold uppercase text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($musician->songs as $song)
+                                <tr style="border-bottom: 1px solid #222;">
+                                    <td class="px-4 py-4">
+                                        <div class="fw-bold text-white">{{ $song->title }}</div>
+                                        <div class="text-secondary small uppercase fw-bold" style="font-size: 10px;">{{ $song->artist ?? 'Artista não informado' }}</div>
+                                    </td>
+                                    <td class="px-4 py-4 text-end">
+                                        <form action="{{ route('musician.songs.destroy', [$musician->slug, $song->id]) }}" method="POST" onsubmit="return confirm('Remover esta música?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-link text-danger p-0">
+                                                <i class="bi bi-trash3-fill"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="2" class="text-center py-5 text-secondary">
+                                        Seu repertório ainda está vazio.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
-
         </div>
     </div>
-</x-app-layout>
+</div>
+
+<style>
+    .form-control:focus {
+        background-color: #000 !important;
+        border-color: #FF4757 !important;
+        box-shadow: none !important;
+        color: white !important;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #1a1a1a !important;
+    }
+</style>
+@endsection

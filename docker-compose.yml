@@ -9,6 +9,33 @@ services:
       - "8000:8000"
     volumes:
       - .:/var/www
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
-      - DB_CONNECTION=sqlite
-      - DB_DATABASE=/var/www/database/database.sqlite
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=tocaai
+      - DB_USERNAME=admin
+      - DB_PASSWORD=admexon2007
+
+  db:
+    image: postgres:15-alpine
+    container_name: tocaai-db
+    environment:
+      - POSTGRES_DB=tocaai
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admexon2007
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d tocaai"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

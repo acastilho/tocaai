@@ -1,28 +1,63 @@
-<x-app-layout :musician="$musician">
-    <div class="max-w-2xl mx-auto p-6">
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="text-2xl font-bold">Pedidos na Fila</h2>
-            <div class="bg-red-950/30 px-3 py-1 rounded-full border border-red-900/50 flex items-center gap-2">
-                <span class="w-2 h-2 bg-red-600 rounded-full animate-ping"></span>
-                <span class="text-[10px] font-black uppercase text-red-500">Ao Vivo</span>
-            </div>
+@extends('layouts.tocaai')
+
+@section('title', 'Painel do Cantor - TocaAí')
+
+@section('content')
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold text-white">Palco de <span style="color: #FF4757;">{{ $musician->name }}</span></h1>
+            <p class="text-secondary">Gerencie seus pedidos e seu repertório</p>
+        </div>
+        <a href="{{ route('musician.show', $musician->slug) }}" class="btn btn-outline-light rounded-pill px-4" target="_blank">
+            <i class="bi bi-eye me-2"></i>Ver Perfil Público
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-8">
+            <h4 class="text-white mb-3">Pedidos Pendentes</h4>
+            @if($orders->where('status', 'pending')->isEmpty())
+                <div class="card card-tocaai p-5 text-center border-0" style="background: #161616; border-radius: 20px;">
+                    <i class="bi bi-music-note-beamed text-secondary display-1 mb-3"></i>
+                    <p class="text-secondary">Nenhum pedido pendente.</p>
+                </div>
+            @else
+                @foreach($orders->where('status', 'pending') as $order)
+                <div class="card card-tocaai mb-3 border-0 shadow-sm" style="background: #161616; border-radius: 15px; border-left: 4px solid #FF4757 !important;">
+                    <div class="card-body d-flex justify-content-between align-items-center p-4">
+                        <div>
+                            <h5 class="text-white mb-1">{{ $order->client_name }}</h5>
+                            <p class="text-secondary mb-0">Música: <span class="text-white fw-bold">{{ $order->song->title ?? '---' }}</span></p>
+                        </div>
+                        <div class="text-end">
+                            <span class="d-block text-coral fw-bold h4 mb-2">R$ {{ number_format($order->amount, 2, ',', '.') }}</span>
+                            <form action="{{ route('orders.complete', $order->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-success rounded-pill px-4 fw-bold">CONCLUIR</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            @endif
         </div>
 
-        <div class="space-y-4">
-            @forelse($orders->where("status", "pending") as $order)
-                <div class="bg-gray-900 border-l-4 border-yellow-500 p-5 rounded-r-2xl flex justify-between items-center">
-                    <div>
-                        <h2 class="text-xl font-black uppercase">{{ $order->song->title }}</h2>
-                        <p class="text-yellow-500">Por: {{ $order->customer_name }}</p>
-                    </div>
-                    <form action="{{ route("order.complete", $order->id) }}" method="POST">
-                        @csrf @method("PATCH")
-                        <button class="bg-green-600 p-3 rounded-xl">✓</button>
-                    </form>
-                </div>
-            @empty
-                <p class="text-center text-gray-600 py-10">Nenhum pedido agora.</p>
-            @endforelse
+        <div class="col-md-4">
+            <div class="card card-tocaai p-4 border-0" style="background: #161616; border-radius: 20px;">
+                <h5 class="text-white mb-3">Link do Perfil</h5>
+                <input type="text" class="form-control bg-dark border-secondary text-secondary mb-3" value="{{ route('musician.show', $musician->slug) }}" readonly>
+                <a href="{{ route('musician.songs.index', $musician->slug) }}" class="btn btn-outline-coral w-100 rounded-pill">
+                    Editar Repertório
+                </a>
+            </div>
         </div>
     </div>
-</x-app-layout>
+</div>
+
+<style>
+    .text-coral { color: #FF4757; }
+    .btn-outline-coral { border: 1px solid #FF4757; color: #FF4757; }
+    .btn-outline-coral:hover { background: #FF4757; color: white; }
+</style>
+@endsection
