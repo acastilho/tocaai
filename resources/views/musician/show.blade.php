@@ -65,8 +65,8 @@
                     <input type="hidden" name="song_id" id="songIdInput">
                     
                     <div class="mb-6 bg-white p-3 rounded-2xl border-[6px] border-coral w-44 mx-auto text-center">
-                        <img id="pixQRCode" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ urlencode($musician->pix_key) }}" 
-                             alt="QR Code Pix" class="w-full h-auto">
+                      <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=COLOQUE_AQUI_SEU_PIX_REAL" 
+     alt="QR Code Pix" class="w-full h-auto">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3 mb-4">

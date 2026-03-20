@@ -9,20 +9,7 @@ class Musician extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'user_id',
-        'name',
-        'slug',
-        'pix_key',
-        'phone',
-        'address',
-        'is_active'
-    ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+  protected $fillable = ['name', 'slug', 'is_active', 'user_id', 'pix_key'];
 
     public function songs()
     {

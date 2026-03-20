@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Musician;
+use App\Models\Singer;
 use App\Models\Song;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class MusicianSongController extends Controller
 {
@@ -15,35 +17,66 @@ class MusicianSongController extends Controller
      */
     public function dashboard()
     {
-        $user = Auth::user();
-        $musician = Musician::where('user_id', $user->id)->first();
+        $user = auth()->user();
 
-        if (!$musician) {
-            return redirect()->route('home')->with('error', 'Perfil de músico não encontrado.');
+        // Busca o perfil unificado (Tenta Musician, se não achar, tenta Singer)
+        $profile = Musician::where('user_id', $user->id)->first() 
+                   ?? Singer::where('user_id', $user->id)->first();
+
+        // Se não existir perfil, redireciona ou avisa, em vez de dar erro 500
+        if (!$profile) {
+            return redirect()->route('home')->with('error', 'Perfil não encontrado para este usuário.');
         }
 
-        // Pegamos todos os pedidos vinculados a este músico para testar a exibição
-        $orders = Order::where('musician_id', $musician->id)
-                       ->with('song')
-                       ->latest()
+        // Busca pedidos vinculados ao ID do perfil
+        // Importante: certifique-se que na tabela 'orders' a coluna é 'musician_id'
+        $orders = Order::where('musician_id', $profile->id)
+                       ->where('status', 'pending')
+                       ->orderBy('created_at', 'desc')
                        ->get();
 
-        return view('musician.dashboard', compact('musician', 'orders'));
+        return view('musician.dashboard', [
+            'musician' => $profile, 
+            'orders' => $orders
+        ]);
     }
 
     /**
-     * Lista de Repertório: Exibe as músicas que o cantor toca.
+     * Concluir Pedido: Atualiza status e limpa da fila.
+     */
+    public function completeOrder($id)
+    {
+        try {
+            $order = Order::findOrFail($id);
+            $user_id = auth()->id();
+
+            // Validação de segurança: o pedido pertence ao usuário logado?
+            $profile = Musician::where('user_id', $user_id)->first() 
+                       ?? Singer::where('user_id', $user_id)->first();
+
+            if (!$profile || $order->musician_id != $profile->id) {
+                return back()->with('error', 'Ação não autorizada.');
+            }
+
+            $order->update(['status' => 'completed']);
+
+            return back()->with('success', 'Pedido concluído!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Erro ao concluir: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Lista de Repertório: Exibe as músicas.
      */
     public function index($slug)
     {
-        $musician = Musician::where('slug', $slug)->firstOrFail();
-        
-        // Segurança: só o dono do perfil acessa o painel de edição
-        if (Auth::id() !== $musician->user_id) {
-            abort(403);
-        }
+        // Busca o perfil pelo slug usando o padrão unificado
+        $musician = Musician::where('slug', $slug)->first() 
+                    ?? Singer::where('slug', $slug)->firstOrFail();
 
-        $songs = $musician->songs()->latest()->get();
+        // Carrega as músicas (Relacionamento belongsTo/hasMany deve estar configurado no Model)
+        $songs = $musician->songs()->orderBy('title')->get(); 
 
         return view('musician.songs.index', compact('musician', 'songs'));
     }
@@ -53,26 +86,48 @@ class MusicianSongController extends Controller
      */
     public function store(Request $request, $slug)
     {
-        $musician = Musician::where('slug', $slug)->firstOrFail();
+        $request->validate(['title' => 'required|string|max:255']);
 
-        $data = $request->validate([
-            'title' => 'required|string|max:255',
-            'artist' => 'nullable|string|max:255',
+        // Localiza o perfil dono do slug
+        $profile = Musician::where('slug', $slug)->first() 
+                   ?? Singer::where('slug', $slug)->firstOrFail();
+
+        // Sincronização de segurança (Sua "Gambiarra de Sobrevivência" melhorada)
+        // Se o perfil for Singer, garantimos que ele existe na tabela 'musicians' para evitar erro de FK
+        if ($profile instanceof Singer) {
+            DB::table('musicians')->updateOrInsert(
+                ['id' => $profile->id],
+                [
+                    'user_id' => $profile->user_id,
+                    'name' => $profile->name,
+                    'slug' => $profile->slug,
+                    'is_active' => true,
+                    'updated_at' => now(),
+                ]
+            );
+        }
+
+        // Criação da música vinculada ao ID do perfil encontrado
+        Song::create([
+            'musician_id' => $profile->id,
+            'title' => $request->title,
+            'is_active' => true,
         ]);
-
-        $musician->songs()->create($data);
 
         return back()->with('success', 'Música adicionada com sucesso!');
     }
 
     /**
-     * Remover Música: Exclui do repertório.
+     * Remover Música: Deleta do repertório.
      */
     public function destroy($slug, $id)
     {
-        $song = Song::where('id', $id)->firstOrFail();
+        // Busca a música e verifica se o ID dela existe
+        $song = Song::findOrFail($id);
+        
+        // Opcional: Validar se a música pertence ao músico logado antes de deletar
         $song->delete();
 
-        return back()->with('success', 'Música removida do repertório.');
+        return back()->with('success', 'Música removida!');
     }
 }
