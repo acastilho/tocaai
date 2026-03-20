@@ -7,6 +7,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\MusicianController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
+use App\Http\Controllers\HomeController;
 
 // --- INFRA E DB ---
 Route::get('/prepare-db', function () {
@@ -23,10 +24,13 @@ Route::get('/', function () {
 })->name('home');
 
 
-use App\Http\Controllers\HomeController;
+
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/como-funciona', [HomeController::class, 'howItWorks'])->name('how.it.works');
+
+Route::get('/dashboard/{slug}/repertorio/importar', [MusicianSongController::class, 'importView'])->name('musician.songs.import');
+Route::post('/dashboard/{slug}/repertorio/importar', [MusicianSongController::class, 'importStore'])->name('musician.songs.import.store');
 
 // Rota de GET para abrir o formulário
 Route::get('/register-singer', function() { 

@@ -130,4 +130,36 @@ class MusicianSongController extends Controller
 
         return back()->with('success', 'Música removida!');
     }
+
+    public function importView($slug)
+{
+    $musician = Musician::where('slug', $slug)->first() ?? Singer::where('slug', $slug)->firstOrFail();
+    return view('musician.songs.import', compact('musician'));
+}
+
+public function importStore(Request $request, $slug)
+{
+    $request->validate(['content' => 'required|string']);
+
+    $profile = Musician::where('slug', $slug)->first() ?? Singer::where('slug', $slug)->firstOrFail();
+
+    // Transforma o texto em array, removendo linhas vazias e espaços extras
+    $lines = explode("\n", $request->content);
+    $count = 0;
+
+    foreach ($lines as $line) {
+        $title = trim($line);
+        if (!empty($title)) {
+            Song::create([
+                'musician_id' => $profile->id,
+                'title' => $title,
+                'is_active' => true,
+            ]);
+            $count++;
+        }
+    }
+
+    return redirect()->route('musician.songs.index', $slug)
+                     ->with('success', "$count músicas importadas com sucesso!");
+}
 }

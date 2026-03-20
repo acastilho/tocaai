@@ -49,6 +49,17 @@
                 <a href="{{ route('musician.songs.index', $musician->slug) }}" class="btn btn-outline-light w-100 rounded-pill fw-bold btn-sm opacity-75 hover-opacity-100">
                     GERENCIAR REPERTÓRIO
                 </a>
+                <hr class="border-secondary opacity-25 mb-4">
+
+<div class="d-grid gap-2">
+    <a href="{{ route('musician.songs.index', $musician->slug) }}" class="btn btn-outline-light rounded-pill fw-bold btn-sm opacity-75 hover-opacity-100">
+        <i class="bi bi-list-ul me-2"></i> VER REPERTÓRIO
+    </a>
+    
+    <a href="{{ route('musician.songs.import', $musician->slug) }}" class="btn btn-dark rounded-pill fw-bold btn-sm border-secondary mt-2">
+        <i class="bi bi-box-arrow-in-down me-2"></i> IMPORTAR LISTA
+    </a>
+</div>
             </div>
         </div>
 
