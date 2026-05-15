@@ -8,7 +8,7 @@
     <div class="d-flex justify-content-between align-items-center mb-5 border-bottom border-dark pb-3">
         <div>
             <h1 class="fw-black text-white uppercase italic m-0" style="font-size: 1.5rem; letter-spacing: -1px;">
-                PALCO: <span style="color: #FF4757;">{{ $musician->name }}</span>
+                PALCO: <span class="text-coral">{{ $musician->name }}</span>
             </h1>
         </div>
         
@@ -18,6 +18,22 @@
                 <i class="bi bi-box-arrow-right me-1"></i> Sair
             </button>
         </form>
+
+        {{-- No topo, onde tem o botão de Sair, adicione o de Notificações --}}
+<div class="d-flex align-items-center gap-2">
+    {{-- Botão para Ativar Notificações no Celular --}}
+    <button type="button" onclick="ativarNotificacoes()" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-bold" style="font-size: 10px; border-color: #333;">
+        <i class="bi bi-bell-fill text-coral me-1"></i> ATIVAR NOTIFICAÇÕES
+    </button>
+
+    <form action="{{ route('logout') }}" method="POST" class="m-0">
+        @csrf
+        <button type="submit" class="btn btn-dark btn-sm rounded-pill px-4 border-secondary text-uppercase fw-bold" style="font-size: 10px; letter-spacing: 1px;">
+            <i class="bi bi-box-arrow-right me-1"></i> Sair
+        </button>
+    </form>
+</div>
+
     </div>
 
     <div class="row g-4">
@@ -28,7 +44,6 @@
                 
                 @if(isset($musician->slug))
                     <div class="bg-white p-3 rounded-4 d-inline-block border border-5 border-coral mb-3">
-                        {{-- Fallback de segurança para o QR Code --}}
                         @if(class_exists('SimpleSoftwareIO\QrCode\Facades\QrCode'))
                             {!! SimpleSoftwareIO\QrCode\Facades\QrCode::size(160)->generate(route('musician.show', $musician->slug)) !!}
                         @else
@@ -46,20 +61,15 @@
 
                 <hr class="border-secondary opacity-25 mb-4">
 
-                <a href="{{ route('musician.songs.index', $musician->slug) }}" class="btn btn-outline-light w-100 rounded-pill fw-bold btn-sm opacity-75 hover-opacity-100">
-                    GERENCIAR REPERTÓRIO
-                </a>
-                <hr class="border-secondary opacity-25 mb-4">
-
-<div class="d-grid gap-2">
-    <a href="{{ route('musician.songs.index', $musician->slug) }}" class="btn btn-outline-light rounded-pill fw-bold btn-sm opacity-75 hover-opacity-100">
-        <i class="bi bi-list-ul me-2"></i> VER REPERTÓRIO
-    </a>
-    
-    <a href="{{ route('musician.songs.import', $musician->slug) }}" class="btn btn-dark rounded-pill fw-bold btn-sm border-secondary mt-2">
-        <i class="bi bi-box-arrow-in-down me-2"></i> IMPORTAR LISTA
-    </a>
-</div>
+                <div class="d-grid gap-2">
+                    <a href="{{ route('musician.songs.index', $musician->slug) }}" class="btn btn-outline-light rounded-pill fw-bold btn-sm opacity-75 hover-opacity-100">
+                        <i class="bi bi-list-ul me-2"></i> VER REPERTÓRIO
+                    </a>
+                    
+                    <a href="{{ route('musician.songs.import', $musician->slug) }}" class="btn btn-dark rounded-pill fw-bold btn-sm border-secondary mt-2">
+                        <i class="bi bi-box-arrow-in-down me-2"></i> IMPORTAR LISTA
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -80,26 +90,47 @@
                             <p class="text-secondary small mt-2 uppercase fw-bold tracking-widest">Silêncio no palco...</p>
                         </div>
                     @else
-                        @foreach($orders->where('status', 'pending') as $order)
-                        <div class="d-flex justify-content-between align-items-center p-3 mb-2 shadow-sm" style="background: #161616; border-radius: 16px; border-left: 4px solid #FF4757;">
-                            <div>
-                                <h6 class="text-white fw-bold mb-0">{{ $order->client_name }}</h6>
-                                <small class="text-secondary italic uppercase font-bold" style="font-size: 10px;">{{ $order->song->title ?? 'Música solicitada' }}</small>
-                            </div>
-                            <div class="text-end">
-                                <span class="d-block text-coral fw-bold mb-2">R$ {{ number_format($order->amount, 2, ',', '.') }}</span>
-                                
-                                <form action="{{ route('orders.complete', $order->id) }}" method="POST" id="form-order-{{ $order->id }}" class="m-0">
-                                    @csrf
-                                    <button type="button" 
-                                            onclick="agradecerETocar('{{ $order->id }}', '{{ addslashes($order->song->title ?? 'música') }}', '{{ addslashes($order->client_name) }}')" 
-                                            class="btn btn-sm btn-light rounded-pill px-3 fw-black uppercase italic" style="font-size: 10px;">
-                                        Tocar
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                        @endforeach
+                    {{-- Remova isso após testar --}}
+
+@foreach($orders->where('status', 'pending') as $order)
+<div class="d-flex justify-content-between align-items-center p-3 mb-3 shadow-sm" style="background: #161616; border-radius: 16px; border-left: 4px solid #FF4757;">
+    <div class="flex-grow-1">
+        <h6 class="text-white fw-bold mb-0">{{ $order->client_name }}</h6>
+        <small class="text-secondary italic uppercase font-bold d-block mb-1" style="font-size: 10px;">
+            <i class="bi bi-music-note-beamed text-coral me-1"></i> {{ $order->song->title ?? 'Música solicitada' }}
+        </small>
+        
+        @if(!empty($order->message))
+            <div class="mt-2 p-2 rounded" style="background: rgba(255, 71, 87, 0.05); border: 1px dashed rgba(255, 71, 87, 0.3);">
+                <p class="text-white m-0" style="font-size: 12px; line-height: 1.4;">
+                    <i class="bi bi-chat-quote-fill text-coral me-1"></i> 
+                    <span class="fw-bold text-coral uppercase" style="font-size: 9px;">Recado:</span> 
+                    "{{ $order->message }}"
+                </p>
+            </div>
+        @endif
+    </div>
+
+    <div class="text-end ms-3">
+        <span class="d-block text-coral fw-bold mb-2">R$ {{ number_format($order->amount, 2, ',', '.') }}</span>
+        
+        <form action="{{ route('orders.complete', $order->id) }}" method="POST" id="form-order-{{ $order->id }}" class="m-0">
+            @csrf
+            <button type="button" 
+                    onclick="agradecerETocar(
+                        '{{ $order->id }}', 
+                        '{{ str_replace(["\r", "\n"], ' ', addslashes($order->song->title ?? 'música')) }}', 
+                        '{{ str_replace(["\r", "\n"], ' ', addslashes($order->client_name)) }}', 
+                        '{{ str_replace(["\r", "\n"], ' ', addslashes($order->message ?? '')) }}'
+                    )" 
+                    class="btn btn-sm btn-light rounded-pill px-3 fw-black uppercase italic"
+                    style="font-size: 10px;">
+                Tocar
+            </button>
+        </form>
+    </div>
+</div>
+@endforeach
                     @endif
                 </div>
             </div>
@@ -110,50 +141,109 @@
 
 <script>
 /**
- * Voz AI e Conclusão de Pedido
+ * Voz AI e Controle de Fluxo
  */
-function agradecerETocar(orderId, musica, cliente) {
-    const texto = `Obrigado pelo pedido, ${cliente}! Vou tocar agora a música ${musica}. Toca aí!`;
+function agradecerETocar(orderId, musica, cliente, mensagem) {
+    console.log(orderId, musica, cliente, mensagem)
+    // Cancela vozes anteriores para não encavalar
+    window.speechSynthesis.cancel();
+
+    let texto = `Obrigado pelo pedido, ${cliente}! `;
+    
+    // Validação de segurança para a mensagem
+    if (mensagem && mensagem !== 'null' && mensagem.trim() !== "") {
+        texto += `Você mandou um recado: ${mensagem}. `;
+    }
+    
+    texto += `Vou tocar agora a música ${musica}. Toca aí!`;
+    
     const msg = new SpeechSynthesisUtterance();
     msg.text = texto;
     msg.lang = 'pt-BR';
-    msg.rate = 1.1;
+    msg.rate = 1.1; // Um pouco mais rápido para ser dinâmico
 
+    // Callback para enviar o formulário após a voz
     msg.onend = function() {
         document.getElementById('form-order-' + orderId).submit();
     };
 
-    msg.onerror = function() {
-        document.getElementById('form-order-' + orderId).submit();
-    };
+    // Fallback: Se a voz falhar por algum motivo, envia o form em 5s
+    setTimeout(() => {
+        const form = document.getElementById('form-order-' + orderId);
+        if(form) form.submit();
+    }, 5000);
 
     window.speechSynthesis.speak(msg);
 }
 
 /**
- * Auto-Refresh Seguro (20s)
+ * Auto-Refresh Inteligente (20s)
+ * Não recarrega se a Voz AI estiver falando para não cortar o áudio
  */
-let refreshTimeout = setTimeout(function atualizarFila() {
+setInterval(function() {
     if (!window.speechSynthesis.speaking) {
         window.location.reload();
-    } else {
-        setTimeout(atualizarFila, 5000);
     }
-}, 20000);
+}, 10000);
+
+// Registra o Service Worker
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+}
+
+async function ativarNotificacoes() {
+    // 1. Pedir permissão
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return alert('Você precisa permitir as notificações no navegador!');
+
+    // 2. Registrar/Verificar Service Worker
+    const registration = await navigator.serviceWorker.ready;
+    
+    // 3. Gerar assinatura (Token)
+    try {
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            // A chave VAPID vem do seu .env
+            applicationServerKey: '{{ env("VAPID_PUBLIC_KEY") }}'
+        });
+
+        // 4. Enviar para o Laravel (Só se a rota existir)
+        @if(Route::has('notifications.subscribe'))
+            await fetch('{{ route("notifications.subscribe") }}', {
+                method: 'POST',
+                body: JSON.stringify(subscription),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            });
+            alert('🚀 Celular pareado! Você receberá avisos mesmo com a tela bloqueada.');
+        @else
+            console.error('A rota notifications.subscribe não foi encontrada no web.php');
+            alert('Erro técnico: Rota de assinatura não configurada.');
+        @endif
+    } catch (e) {
+        console.error('Erro ao assinar:', e);
+        alert('Falha ao parear. Verifique se o site está em HTTPS ou localhost.');
+    }
+}
+
 </script>
 
 <style>
-    body { background-color: #000 !important; }
+    body { background-color: #000 !important; color: #fff; }
     .text-coral { color: #FF4757 !important; }
     .bg-coral { background-color: #FF4757 !important; }
-    .btn-coral { background-color: #FF4757 !important; color: white !important; border: none; }
-    .border-coral { border-color: #FF4757 !important; }
+    .btn-coral { background-color: #FF4757 !important; color: white !important; border: none; transition: 0.3s; }
+    .btn-coral:hover { background-color: #ff6b81 !important; transform: scale(1.02); }
+    .card-tocaai { box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
     .fw-black { font-weight: 900; }
     .italic { font-style: italic; }
     
+    /* Scrollbar Customizada Estilo Dark */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: #111; }
-    ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #FF4757; }
 </style>
 @endsection

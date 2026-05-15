@@ -4,32 +4,39 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use Illuminate\Http\Request;
+use App\Notifications\NewOrderNotification;
 
 class OrderController extends Controller
 {
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'musician_id' => 'required|exists:musicians,id',
-            'song_id' => 'required|exists:songs,id',
-            'client_name' => 'required|string|max:255',
-            'amount' => 'required|numeric|min:1',
-        ]);
+   public function store(Request $request)
+{
+    $data = $request->validate([
+        'musician_id' => 'required|exists:musicians,id',
+        'song_id' => 'required|exists:songs,id',
+        'client_name' => 'required|string|max:255',
+        'amount' => 'required|numeric|min:1',
+        'message' => 'nullable|string|max:500', // <--- ADICIONE ESTA LINHA
+    ]);
 
-        Order::create([
-            'musician_id' => $data['musician_id'],
-            'song_id' => $data['song_id'],
-            'client_name' => $data['client_name'],
-            'amount' => $data['amount'],
-            'status' => 'pending',
-        ]);
+    // Agora o campo 'message' faz parte de $data
+   $order =  Order::create([
+        'musician_id' => $data['musician_id'],
+        'song_id' => $data['song_id'],
+        'client_name' => $data['client_name'],
+        'amount' => $data['amount'],
+        'status' => 'pending',
+        'message'=> $data['message'] ?? null // Garante que não quebre se vier vazio
+    ]);
 
-        return back()->with([
-            'success' => 'Pedido enviado!',
-            'audio_name' => $data['client_name'],
-            'audio_amount' => $data['amount']
-        ]);
-    }
+$musician = $order->musician->user; 
+$musician->notify(new NewOrderNotification($order));
+
+    return back()->with([
+        'success' => 'Pedido enviado!',
+        'audio_name' => $data['client_name'],
+        'audio_amount' => $data['amount']
+    ]);
+}
 
     public function complete($id)
     {

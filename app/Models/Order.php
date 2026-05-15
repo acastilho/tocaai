@@ -14,7 +14,8 @@ class Order extends Model
         'song_id',
         'client_name',
         'amount',
-        'status'
+        'status',
+        'message'
     ];
 
     public function musician()

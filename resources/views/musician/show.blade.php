@@ -69,18 +69,29 @@
      alt="QR Code Pix" class="w-full h-auto">
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div>
-                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2 ml-2 tracking-widest">Seu Nome/Mesa</label>
-                            <input type="text" id="client_name_input" name="client_name" required placeholder="Ex: Mesa 4" 
-                                   class="w-full bg-[#000] border border-[#333] rounded-xl px-4 py-3 text-white focus:border-coral outline-none text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2 ml-2 tracking-widest">Valor Doado (R$)</label>
-                            <input type="number" id="amount_input" name="amount" required step="0.01" min="1" placeholder="10,00" 
-                                   class="w-full bg-[#000] border border-[#333] rounded-xl px-4 py-3 text-white focus:border-coral outline-none text-sm">
-                        </div>
-                    </div>
+                   <div class="grid grid-cols-2 gap-3 mb-4">
+    <div>
+        <label class="block text-[10px] font-black uppercase text-gray-500 mb-2 ml-2 tracking-widest">Seu Nome/Mesa</label>
+        <input type="text" id="client_name_input" name="client_name" required placeholder="Ex: Mesa 4" 
+               class="w-full bg-[#000] border border-[#333] rounded-xl px-4 py-3 text-white focus:border-coral outline-none text-sm">
+    </div>
+    <div>
+        <label class="block text-[10px] font-black uppercase text-gray-500 mb-2 ml-2 tracking-widest">Valor Doado (R$)</label>
+        <input type="number" id="amount_input" name="amount" required step="0.01" min="1" placeholder="10,00" 
+               class="w-full bg-[#000] border border-[#333] rounded-xl px-4 py-3 text-white focus:border-coral outline-none text-sm">
+    </div>
+</div>
+
+<div class="mb-6">
+    <div class="flex justify-between items-center mb-2 ml-2">
+        <label class="block text-[10px] font-black uppercase text-gray-500 tracking-widest">Dedicatória / Mensagem</label>
+        <span class="text-[8px] bg-[#222] text-gray-400 px-2 py-0.5 rounded-full uppercase">Opcional</span>
+    </div>
+    <textarea id="message_input" name="message" rows="3" 
+              placeholder="Ex: Ofereço para a galera da mesa 10! Toca aí!" 
+              class="w-full bg-[#000] border border-[#333] rounded-xl px-4 py-3 text-white focus:border-coral outline-none text-sm resize-none"></textarea>
+    <p class="text-[9px] text-gray-600 mt-2 italic px-2">* Sua mensagem será lida pela Voz AI no palco!</p>
+</div>
 
                     <div class="bg-[#161616] p-4 rounded-2xl border border-[#222] mb-6 text-center">
                         <span class="text-[9px] text-gray-500 font-bold uppercase block mb-1">Chave PIX do Artista</span>

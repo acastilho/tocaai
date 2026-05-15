@@ -8,6 +8,7 @@ use App\Http\Controllers\MusicianController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PushSubscriptionController;
 
 // --- INFRA E DB ---
 Route::get('/prepare-db', function () {
@@ -22,8 +23,6 @@ Route::get('/prepare-db', function () {
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
-
-
 
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -75,3 +74,6 @@ Route::delete('/dashboard/{slug}/painel-repertorio/{id}', [MusicianSongControlle
 
 // --- PERFIL PÚBLICO (Sempre por último) ---
 Route::get('/{slug}', [MusicianController::class, 'show'])->name('musician.show');
+
+Route::post('/notifications/subscribe', [PushSubscriptionController::class, 'subscribe'])
+    ->name('notifications.subscribe');

@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.3",
         "doctrine/dbal": "^4.4",
+        "laravel-notification-channels/webpush": "^10.5",
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
         "simplesoftwareio/simple-qrcode": "^4.2"
