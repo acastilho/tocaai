@@ -1,0 +1,138 @@
+{
+  "name": "TocaAí - Máquina de Leads Grátis",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": "=\n"
+      },
+      "id": "7f8b9c0d-e1f2-3a4b-5c6d-7e8f9a0b1c2d",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [200, 300],
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyDay",
+              "hour": 9
+            }
+          ]
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://html.duckduckgo.com/html/",
+        "sendQueryParameters": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "site:instagram.com \"agenda de shows\" \"wa.me\""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+      "name": "Busca DuckDuckGo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cheerio = require('cheerio');\nconst $ = cheerio.load($input.first().json.body);\nconst results = [];\n\n$('.result__body').each((index, element) => {\n    const title = $(element).find('.result__title a').text().trim();\n    const link = $(element).find('.result__url').text().trim();\n    const snippet = $(element).find('.result__snippet').text().trim();\n    \n    const regexWhats = /(?:wa\\.me\\/|api\\.whatsapp\\.com\\/send\\?phone=)(\\d+)/g;\n    const match = regexWhats.exec(snippet);\n    \n    if (match && match[1]) {\n        results.push({\n            json: {\n                perfil_contexto: title.replace(/\\s+--\\s+Instagram.*/, ''),\n                link_instagram: \"https://\" + link.replace(/\\s/g, ''),\n                whatsapp_bruto: match[1]\n            }\n        });\n    }\n});\n\nreturn results;"
+      },
+      "id": "8a9b0c1d-2e3f-4a5b-6c7d-8e9f0a1b2c3d",
+      "name": "Filtro e Regex WhatsApp",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "for (let item of $input.all()) {\n    let telefone = item.json.whatsapp_bruto || \"\";\n    let apenasNumeros = telefone.replace(/\\D/g, '');\n\n    if (apenasNumeros.length === 11) {\n        item.json.whatsapp_valido = \"55\" + apenasNumeros;\n    } else if (apenasNumeros.length === 13 && apenasNumeros.startsWith(\"55\")) {\n        item.json.whatsapp_valido = apenasNumeros;\n    } else {\n        item.json.whatsapp_valido = apenasNumeros.startsWith(\"55\") ? apenasNumeros : \"55\" + apenasNumeros;\n    }\n}\nreturn $input.all();"
+      },
+      "id": "2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e",
+      "name": "Padroniza Telefone",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "schema": "public",
+        "table": "leads_prospeccao",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nome_perfil": "={{ $json.perfil_contexto }}",
+            "link_instagram": "={{ $json.link_instagram }}",
+            "whatsapp": "={{ $json.whatsapp_valido }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f",
+      "name": "Grava no Banco SQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [1080, 300],
+      "credentials": {
+        "postgres": {
+          "id": "internal_db",
+          "name": "Banco TocaAí Interno"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Busca DuckDuckGo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Busca DuckDuckGo": {
+      "main": [
+        [
+          {
+            "node": "Filtro e Regex WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtro e Regex WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Padroniza Telefone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Padroniza Telefone": {
+      "main": [
+        [
+          {
+            "node": "Grava no Banco SQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
