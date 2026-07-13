@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    // Configuração para ler a chave VAPID com segurança e sem problemas de cache
+    'webpush' => [
+        'vapid_public_key' => env('VAPID_PUBLIC_KEY'),
+    ],
+
 ];

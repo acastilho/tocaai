@@ -191,41 +191,71 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js');
 }
 
+// Função essencial para converter a string Base64 da chave VAPID para Uint8Array
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
 async function ativarNotificacoes() {
     // 1. Pedir permissão
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') return alert('Você precisa permitir as notificações no navegador!');
 
-    // 2. Registrar/Verificar Service Worker
+    // 2. Verificar Service Worker
     const registration = await navigator.serviceWorker.ready;
     
     // 3. Gerar assinatura (Token)
     try {
+        const rawVapidKey = '{{ env("VAPID_PUBLIC_KEY") }}';
+        
+        // Proteção caso o .env não esteja enviando o valor correto
+        if (!rawVapidKey) {
+            console.error('A chave VAPID_PUBLIC_KEY está vazia ou ilegível no .env');
+            return alert('Erro interno: Chave de pareamento não configurada.');
+        }
+
+        // Conversão obrigatória para o navegador aceitar
+        const catConvertedKey = urlBase64ToUint8Array(rawVapidKey);
+
         const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            // A chave VAPID vem do seu .env
-            applicationServerKey: '{{ env("VAPID_PUBLIC_KEY") }}'
+            applicationServerKey: catConvertedKey
         });
 
-        // 4. Enviar para o Laravel (Só se a rota existir)
-        @if(Route::has('notifications.subscribe'))
-            await fetch('{{ route("notifications.subscribe") }}', {
-                method: 'POST',
-                body: JSON.stringify(subscription),
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            });
-            alert('🚀 Celular pareado! Você receberá avisos mesmo com a tela bloqueada.');
-        @else
-            console.error('A rota notifications.subscribe não foi encontrada no web.php');
-            alert('Erro técnico: Rota de assinatura não configurada.');
-        @endif
-    } catch (e) {
-        console.error('Erro ao assinar:', e);
-        alert('Falha ao parear. Verifique se o site está em HTTPS ou localhost.');
+       // 4. Enviar para o Laravel
+@if(Route::has('notifications.subscribe'))
+    const response = await fetch('{{ route("notifications.subscribe") }}', {
+        method: 'POST',
+        body: JSON.stringify(subscription),
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json', // <--- Importante para o Laravel responder em JSON
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    });
+
+    // Verifica se o servidor retornou algum erro (4xx ou 5xx)
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Erro no servidor: ${response.status}`);
     }
+
+    alert('🚀 Celular pareado! Você receberá avisos mesmo com a tela bloqueada.');
+@else
+    console.error('A rota notifications.subscribe não foi encontrada no web.php');
+    alert('Erro técnico: Rota de assinatura não configurada.');
+@endif
 }
 
 </script>
