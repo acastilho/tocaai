@@ -57,3 +57,14 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 # tocaai
+
+<!-- COMPROMISSO-GERAL-A-CASTILHO -->
+
+---
+
+## Compromisso Geral
+
+**Sempre na melhor prática. No caminho do bem maior.**
+
+**Ir até o fim sem sair do caminho, seja ele qual for.**
+
